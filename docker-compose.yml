@@ -116,7 +116,7 @@ services:
       - cassandra_data:/var/lib/cassandra
       - ./cql/init.cql:/docker-entrypoint-initdb.d/init.cql
     healthcheck:
-      test: ["CMD-SHELL", "nodetool status | grep -q '^UN'"]
+      test: ["CMD-SHELL", "nodetool status | grep -q '^UN' && cqlsh 127.0.0.1 9042 -e \"SELECT release_version FROM system.local;\" > /dev/null 2>&1"]
       interval: 30s
       timeout: 10s
       retries: 10
