@@ -1,0 +1,8 @@
+# FastAPI framework used to expose the GridSense REST API endpoints.
+fastapi
+
+# ASGI web server used to run the FastAPI application inside the Docker container.
+uvicorn[standard]
+
+# Data validation models used for API request and response schemas.
+pydantic
