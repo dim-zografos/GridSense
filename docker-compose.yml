@@ -13,13 +13,14 @@ services:
         condition: service_healthy
       graph-db:
         condition: service_healthy
-      timeseries-db:
-        condition: service_healthy
+      cassandra-init:
+        condition: service_completed_successfully
 
   cache:
     image: redis:7-alpine
     ports:
       - "6379:6379"
+    restart: unless-stopped
     environment:
       REDIS_PASSWORD: ${REDIS_PASSWORD}
     command:
@@ -34,15 +35,16 @@ services:
       test:
         - CMD-SHELL
         - 'redis-cli -a "$$REDIS_PASSWORD" ping | grep -q PONG'
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
 
   billing-db:
     image: postgres:15
     ports:
       - "5432:5432"
+    restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -53,15 +55,16 @@ services:
       test:
         - CMD-SHELL
         - 'pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"'
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 5s
+      interval: 15s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
 
   catalog-db:
     image: mongo:7
     ports:
       - "27017:27017"
+    restart: unless-stopped
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD}
@@ -72,10 +75,10 @@ services:
       test:
         - CMD-SHELL
         - 'mongosh --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand(''ping'').ok" | grep -q 1'
-      interval: 5s
-      timeout: 3s
-      retries: 5
-      start_period: 10s
+      interval: 20s
+      timeout: 5s
+      retries: 8
+      start_period: 15s
 
   graph-db:
     image: neo4j:5-community
@@ -118,6 +121,15 @@ services:
       timeout: 10s
       retries: 10
       start_period: 40s
+
+  cassandra-init:
+    image: cassandra:4.1
+    depends_on:
+      timeseries-db:
+        condition: service_healthy
+    volumes:
+      - ./cql/init.cql:/init.cql:ro
+    command: ["cqlsh", "timeseries-db", "9042", "-f", "/init.cql"]
 
 volumes:
   cassandra_data:
