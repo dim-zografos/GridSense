@@ -6,3 +6,18 @@ uvicorn[standard]
 
 # Data validation models used for API request and response schemas.
 pydantic
+
+# Cassandra Python driver used to connect to the time-series database.
+cassandra-driver
+
+# Neo4j Python driver with asynchronous API support.
+neo4j
+
+# MongoDB driver.
+motor
+
+# PostgreSQL driver.
+asyncpg
+
+# Redis client.
+redis
