@@ -16,76 +16,93 @@ FOR (m:SmartMeter) REQUIRE m.meter_id IS UNIQUE;
 // ── Nodes ────────────────────────────────────────────────────────
 // Grid Supply Point (top of hierarchy)
 MERGE (g:GridSupplyPoint {gsp_id: "GSP_NORTH"})
-SET g.name = "Northern Grid Supply Point",
+SET g.node_id = "GSP_NORTH",
+    g.name = "Northern Grid Supply Point",
+    g.voltage_kV = 132,
+    g.region = "North Metro";
+
+MERGE (g:GridSupplyPoint {gsp_id: "GSP_BACKUP"})
+SET g.node_id = "GSP_BACKUP",
+    g.name = "Backup Grid Supply Point",
     g.voltage_kV = 132,
     g.region = "North Metro";
 
 // Substations
 MERGE (s:Substation {substation_id: "SS_001"})
-SET s.name = "Volos Primary",
+SET s.node_id = "SS_001",
+    s.name = "Volos Primary",
     s.voltage_kV = 11,
     s.lat = 39.358,
     s.lon = 22.938,
     s.commissioned_year = 1998;
 
 MERGE (s:Substation {substation_id: "SS_002"})
-SET s.name = "Larissa Primary",
+SET s.node_id = "SS_002",
+    s.name = "Larissa Primary",
     s.voltage_kV = 11,
     s.lat = 39.637,
     s.lon = 22.420,
     s.commissioned_year = 2004;
 
 MERGE (s:Substation {substation_id: "SS_003"})
-SET s.name = "Trikala Primary",
+SET s.node_id = "SS_003",
+    s.name = "Trikala Primary",
     s.voltage_kV = 11,
     s.lat = 39.555,
     s.lon = 21.768,
     s.commissioned_year = 2001;
 
 MERGE (s:Substation {substation_id: "SS_004"})
-SET s.name = "Karditsa Primary",
+SET s.node_id = "SS_004",
+    s.name = "Karditsa Primary",
     s.voltage_kV = 11,
     s.lat = 39.364,
     s.lon = 21.922,
     s.commissioned_year = 1995;
 
 MERGE (s:Substation {substation_id: "SS_005"})
-SET s.name = "Farsala Primary",
+SET s.node_id = "SS_005",
+    s.name = "Farsala Primary",
     s.voltage_kV = 11,
     s.lat = 39.295,
     s.lon = 22.385,
     s.commissioned_year = 2008;
 
 MERGE (s:Substation {substation_id: "SS_006"})
-SET s.name = "Tyrnavos Primary",
+SET s.node_id = "SS_006",
+    s.name = "Tyrnavos Primary",
     s.voltage_kV = 11,
     s.lat = 39.738,
     s.lon = 22.289,
     s.commissioned_year = 2003;
 
 MERGE (s:Substation {substation_id: "SS_007"})
-SET s.name = "Elassona Primary",
+SET s.node_id = "SS_007",
+    s.name = "Elassona Primary",
     s.voltage_kV = 11,
     s.lat = 39.895,
     s.lon = 22.189,
     s.commissioned_year = 1990;
 
 MERGE (s:Substation {substation_id: "SS_008"})
-SET s.name = "Kalambaka Primary",
+SET s.node_id = "SS_008",
+    s.name = "Kalambaka Primary",
     s.voltage_kV = 11,
     s.lat = 39.704,
     s.lon = 21.627,
     s.commissioned_year = 2011;
 
 MERGE (s:Substation {substation_id: "SS_009"})
-SET s.name = "Almyros Primary",
+SET s.node_id = "SS_009",
+    s.name = "Almyros Primary",
     s.voltage_kV = 11,
     s.lat = 39.182,
     s.lon = 22.759,
     s.commissioned_year = 2006;
 
 MERGE (s:Substation {substation_id: "SS_010"})
-SET s.name = "Velestino Primary",
+SET s.node_id = "SS_010",
+    s.name = "Velestino Primary",
     s.voltage_kV = 11,
     s.lat = 39.382,
     s.lon = 22.744,
@@ -113,6 +130,8 @@ WITH i, j,
 MERGE (t:Transformer {asset_id: asset_id})
 
 ON CREATE SET
+    t.node_id = asset_id,
+    t.name = "Transformer " + asset_id,
     t.rating_kVA = rating_kVA,
     t.manufacturer =
         CASE (i + j) % 4
@@ -146,6 +165,8 @@ WITH i, j, k, meter_number,
 MERGE (m:SmartMeter {meter_id: meter_id})
 
 ON CREATE SET
+    m.node_id = meter_id,
+    m.name = "Smart Meter " + meter_id,
     m.premise_id = premise_id,
     m.tariff_class =
         CASE meter_number % 5
@@ -173,7 +194,8 @@ MATCH (s:Substation {substation_id: substation_id})
 MERGE (g)-[r:FEEDS]->(s)
 SET r.feeder_id = "F_" + right("00" + toString(i), 3),
     r.voltage_kV = 11,
-    r.length_km = 1.5 + i * 0.35;
+    r.length_km = 1.5 + i * 0.35,
+    r.active = true;
 
 // Substations → Transformers
 UNWIND range(1, 10) AS i
@@ -195,7 +217,8 @@ MATCH (s:Substation {substation_id: substation_id})
 MATCH (t:Transformer {asset_id: asset_id})
 MERGE (s)-[r:SUPPLIES]->(t)
 SET r.cable_id = "CB_" + right("00" + toString(i), 3) + "_" + transformer_letter,
-    r.distance_m = 180 + i * 25 + j * 40;
+    r.distance_m = 180 + i * 25 + j * 40,
+    r.active = true;
 
 // Transformers → Smart Meters
 UNWIND range(1, 10) AS i
@@ -219,4 +242,50 @@ WITH asset_id,
 
 MATCH (t:Transformer {asset_id: asset_id})
 MATCH (m:SmartMeter {meter_id: meter_id})
-MERGE (t)-[:CONNECTS_TO]->(m);
+MERGE (t)-[r:CONNECTS_TO]->(m)
+SET r.active = true;
+
+// ── Redundant / backup relationships ────────────────────────────
+
+// Backup Grid Supply Point → Substations
+MATCH (g:GridSupplyPoint {gsp_id: "GSP_BACKUP"})
+MATCH (s:Substation {substation_id: "SS_001"})
+MERGE (g)-[r:FEEDS]->(s)
+SET r.feeder_id = "F_BACKUP_001",
+    r.voltage_kV = 11,
+    r.length_km = 2.4,
+    r.active = false;
+
+MATCH (g:GridSupplyPoint {gsp_id: "GSP_BACKUP"})
+MATCH (s:Substation {substation_id: "SS_003"})
+MERGE (g)-[r:FEEDS]->(s)
+SET r.feeder_id = "F_BACKUP_003",
+    r.voltage_kV = 11,
+    r.length_km = 3.1,
+    r.active = false;
+
+// Backup Substations → Transformers
+MATCH (s:Substation {substation_id: "SS_002"})
+MATCH (t:Transformer {asset_id: "TX_001_A"})
+MERGE (s)-[r:SUPPLIES]->(t)
+SET r.cable_id = "CB_BACKUP_001_A",
+    r.distance_m = 420,
+    r.active = false;
+
+MATCH (s:Substation {substation_id: "SS_004"})
+MATCH (t:Transformer {asset_id: "TX_003_A"})
+MERGE (s)-[r:SUPPLIES]->(t)
+SET r.cable_id = "CB_BACKUP_003_A",
+    r.distance_m = 510,
+    r.active = false;
+
+// Backup Transformers → Smart Meters
+MATCH (t:Transformer {asset_id: "TX_001_B"})
+MATCH (m:SmartMeter {meter_id: "SM_00001"})
+MERGE (t)-[r:CONNECTS_TO]->(m)
+SET r.active = false;
+
+MATCH (t:Transformer {asset_id: "TX_003_B"})
+MATCH (m:SmartMeter {meter_id: "SM_00041"})
+MERGE (t)-[r:CONNECTS_TO]->(m)
+SET r.active = false;
