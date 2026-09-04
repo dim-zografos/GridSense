@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from db import neo4j, mongo, redis, postgres, cassandra
-from routers import sensors, grid, equipment, billing
+from routers import sensors, grid, equipment, billing, alerts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -33,6 +33,7 @@ app.include_router(sensors.router)
 app.include_router(grid.router)
 app.include_router(equipment.router)
 app.include_router(billing.router)
+app.include_router(alerts.router)
 
 @app.get("/health")
 async def health_check():
