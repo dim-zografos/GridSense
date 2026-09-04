@@ -9,6 +9,15 @@ services:
     depends_on:
       cache:
         condition: service_healthy
+      seed:
+        condition: service_completed_successfully
+
+  seed:
+    build:
+      context: ./api
+    env_file:
+      - .env
+    depends_on:
       billing-db:
         condition: service_healthy
       catalog-db:
@@ -17,6 +26,10 @@ services:
         condition: service_healthy
       cassandra-init:
         condition: service_completed_successfully
+    volumes:
+      - ./scripts:/app/scripts:ro
+      - ./neo4j:/app/neo4j:ro
+    command: ["python", "scripts/seed.py"]
 
   cache:
     image: redis:7-alpine
