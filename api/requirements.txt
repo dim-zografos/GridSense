@@ -21,3 +21,6 @@ asyncpg
 
 # Redis client.
 redis
+
+# Prometheus instrumentation for FastAPI request metrics.
+prometheus-fastapi-instrumentator

@@ -1,0 +1,12 @@
+apiVersion: 1
+
+providers:
+  - name: GridSense
+    orgId: 1
+    folder: GridSense
+    type: file
+    disableDeletion: true
+    updateIntervalSeconds: 30
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
