@@ -12,7 +12,6 @@
 # - p50 latency
 # - p95 latency
 # - p99 latency
-# - cache hit rate
 
 import os
 import time

@@ -16,7 +16,7 @@
 # - p95 write latency
 # - number of failed writes
 
-# Each consistency level is tested manually three times using the
+# Each consistency level is tested manually four times using the
 # same workload so that the results can be compared fairly.
 
 import os
