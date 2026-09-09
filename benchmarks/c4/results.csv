@@ -1,0 +1,4 @@
+query,mongodb_mean_ms,postgresql_mean_ms
+Q1,1.778,0.504
+Q2,1.645,0.530
+Q3,1.660,0.475
